@@ -1,427 +1,528 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Instagram, 
-  Twitter, 
-  Mail, 
-  ExternalLink, 
-  Palette, 
-  PenTool, 
-  Coffee, 
-  Heart, 
-  X,
-  Menu,
-  Sparkles,
-  Brush
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POPO.ART - デフォルメイラストレーター ポートフォリオ</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts (Rounded M+ 1c for cute/pop feel) -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 
-// --- ダミー画像コンポーネント (実際の画像がないためSVGで生成) ---
-const PlaceholderArt = ({ type, color }) => {
-  const colors = {
-    pink: "bg-pink-100 text-pink-500",
-    blue: "bg-blue-100 text-blue-500",
-    yellow: "bg-yellow-100 text-yellow-500",
-    purple: "bg-purple-100 text-purple-500",
-    green: "bg-green-100 text-green-500",
-  };
-  
-  const renderContent = () => {
-    switch (type) {
-      case 'character':
-        return (
-          <svg viewBox="0 0 100 100" className="w-2/3 h-2/3 animate-pulse-slow">
-            <circle cx="50" cy="50" r="40" fill="currentColor" className="opacity-20"/>
-            <circle cx="35" cy="45" r="5" fill="currentColor"/>
-            <circle cx="65" cy="45" r="5" fill="currentColor"/>
-            <path d="M 40 65 Q 50 75 60 65" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
-            <circle cx="30" cy="55" r="4" fill="#ff9999" opacity="0.5"/>
-            <circle cx="70" cy="55" r="4" fill="#ff9999" opacity="0.5"/>
-          </svg>
-        );
-      case 'animal':
-        return (
-          <svg viewBox="0 0 100 100" className="w-2/3 h-2/3">
-            <path d="M 20 30 Q 50 10 80 30 L 80 80 Q 50 90 20 80 Z" fill="currentColor" className="opacity-20"/>
-            <path d="M 20 30 L 15 10 L 35 25 Z" fill="currentColor" className="opacity-30"/>
-            <path d="M 80 30 L 85 10 L 65 25 Z" fill="currentColor" className="opacity-30"/>
-            <circle cx="40" cy="50" r="4" fill="currentColor"/>
-            <circle cx="60" cy="50" r="4" fill="currentColor"/>
-            <ellipse cx="50" cy="60" rx="6" ry="4" fill="currentColor"/>
-          </svg>
-        );
-      case 'food':
-        return (
-          <svg viewBox="0 0 100 100" className="w-2/3 h-2/3">
-            <path d="M 50 20 L 80 80 L 20 80 Z" fill="currentColor" className="opacity-20" rx="10"/>
-            <circle cx="40" cy="40" r="6" fill="white" opacity="0.8"/>
-            <circle cx="60" cy="55" r="5" fill="white" opacity="0.8"/>
-            <circle cx="50" cy="70" r="7" fill="white" opacity="0.8"/>
-          </svg>
-        );
-      default:
-        return <Palette size={48} className="opacity-30" />;
-    }
-  };
-
-  return (
-    <div className={`w-full h-full flex items-center justify-center rounded-3xl overflow-hidden ${colors[color] || colors.pink}`}>
-      {renderContent()}
-    </div>
-  );
-};
-
-// --- データ ---
-const portfolioItems = [
-  { id: 1, title: "看板娘ちゃん", category: "original", type: "character", color: "pink", description: "オリジナルキャラクターの基本立ち絵です。" },
-  { id: 2, title: "配信待機画面", category: "work", type: "animal", color: "blue", description: "Vtuber様のご依頼で制作した待機画面イラストです。" },
-  { id: 3, title: "カフェメニュー", category: "work", type: "food", color: "yellow", description: "コラボカフェのSDイラストを担当しました。" },
-  { id: 4, title: "夏祭り", category: "original", type: "character", color: "purple", description: "季節のイラスト（8月）。" },
-  { id: 5, title: "ゲームアバター", category: "fanart", type: "character", color: "green", description: "某RPGの自キャラデフォルメ。" },
-  { id: 6, title: "スタンプ用", category: "work", type: "animal", color: "pink", description: "LINEスタンプ用の40種セットの一部。" },
-];
-
-const prices = [
-  { title: "SDアイコン", price: "¥5,000~", desc: "SNSアイコンなどに最適。バストアップ中心。", icon: <Heart size={20} /> },
-  { title: "SD全身", price: "¥8,000~", desc: "グッズ制作や動画素材に。透過PNG納品。", icon: <Sparkles size={20} /> },
-  { title: "一枚絵", price: "¥15,000~", desc: "背景や小物を含む、物語性のあるイラスト。", icon: <Palette size={20} /> },
-];
-
-export default function App() {
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  // スクロール検知
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const filteredItems = activeCategory === 'all' 
-    ? portfolioItems 
-    : portfolioItems.filter(item => item.category === activeCategory);
-
-  const scrollToSection = (id) => {
-    setIsMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-orange-50 font-sans text-gray-700 selection:bg-pink-200">
-      {/* 背景の装飾パターン */}
-      <div className="fixed inset-0 pointer-events-none opacity-10" 
-           style={{ backgroundImage: 'radial-gradient(#fb7185 1px, transparent 1px)', backgroundSize: '24px 24px' }}>
-      </div>
-
-      {/* ナビゲーション */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm py-2' : 'bg-transparent py-6'}`}>
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-pink-500 flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
-            <span className="bg-pink-500 text-white p-1 rounded-lg rotate-3"><Brush size={20}/></span>
-            POPO.ART
-          </h1>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex gap-8 font-medium text-gray-600">
-            {['Gallery', 'About', 'Price', 'Contact'].map((item) => (
-              <button 
-                key={item}
-                onClick={() => scrollToSection(item.toLowerCase())}
-                className="hover:text-pink-500 transition-colors relative group"
-              >
-                {item}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-pink-400 transition-all duration-300 group-hover:w-full"></span>
-              </button>
-            ))}
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button className="md:hidden p-2 text-gray-600" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
-          </button>
-        </div>
-
-        {/* Mobile Menu Dropdown */}
-        {isMenuOpen && (
-          <div className="absolute top-full left-0 w-full bg-white shadow-lg py-4 flex flex-col items-center gap-4 md:hidden animate-fade-in-down">
-            {['Gallery', 'About', 'Price', 'Contact'].map((item) => (
-              <button 
-                key={item}
-                onClick={() => scrollToSection(item.toLowerCase())}
-                className="text-lg font-medium text-gray-600 hover:text-pink-500"
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        )}
-      </nav>
-
-      {/* ヒーローセクション */}
-      <header className="pt-32 pb-20 px-4 container mx-auto text-center relative overflow-hidden">
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <div className="inline-block px-4 py-1 bg-yellow-200 text-yellow-800 rounded-full text-sm font-bold mb-4 rotate-[-2deg] shadow-sm">
-            Welcome to my portfolio!
-          </div>
-          <h2 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight tracking-tight">
-            ゆるっと、かわいく、<br/>
-            <span className="text-pink-500 inline-block transform hover:scale-110 transition-transform duration-300 cursor-default">元気</span>
-            をお届けします。
-          </h2>
-          <p className="text-lg text-gray-600 mb-10 leading-relaxed">
-            デフォルメイラストレーター「ぽぽ」のポートフォリオサイトです。<br/>
-            キャラクターの魅力をぎゅっと縮めて描きます。
-          </p>
-          <div className="flex justify-center gap-4">
-            <button onClick={() => scrollToSection('gallery')} className="px-8 py-3 bg-pink-500 text-white rounded-full font-bold shadow-lg hover:bg-pink-600 hover:shadow-pink-300/50 hover:-translate-y-1 transition-all duration-300">
-              作品を見る
-            </button>
-            <button onClick={() => scrollToSection('contact')} className="px-8 py-3 bg-white text-pink-500 border-2 border-pink-200 rounded-full font-bold hover:bg-pink-50 hover:border-pink-300 transition-all duration-300">
-              ご依頼・相談
-            </button>
-          </div>
-        </div>
-
-        {/* 装飾オブジェクト */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-        <div className="absolute top-40 right-10 w-20 h-20 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-10 left-1/4 w-20 h-20 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
-      </header>
-
-      {/* ギャラリーセクション */}
-      <section id="gallery" className="py-20 bg-white rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-800 mb-4 flex justify-center items-center gap-2">
-              <Palette className="text-pink-400" /> Gallery
-            </h3>
-            <div className="flex flex-wrap justify-center gap-2">
-              {[
-                { id: 'all', label: 'ALL' },
-                { id: 'original', label: 'Original' },
-                { id: 'fanart', label: 'Fan Art' },
-                { id: 'work', label: 'Work' }
-              ].map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-                    activeCategory === cat.id 
-                      ? 'bg-pink-500 text-white shadow-md scale-105' 
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <div 
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="group relative aspect-square cursor-pointer rounded-3xl overflow-hidden bg-gray-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-4 border-white"
-              >
-                <PlaceholderArt type={item.type} color={item.color} />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                <div className="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-sm text-center">
-                    <p className="text-sm font-bold text-gray-800">{item.title}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About & Price セクション */}
-      <section className="py-20 bg-yellow-50">
-        <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12">
-          
-          {/* About */}
-          <div id="about" className="bg-white p-8 rounded-3xl shadow-sm border-2 border-yellow-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <Coffee className="text-yellow-500" /> About Me
-            </h3>
-            <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-              <div className="w-32 h-32 bg-pink-100 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
-                 <svg viewBox="0 0 100 100" className="w-24 h-24 text-pink-500">
-                    <circle cx="50" cy="50" r="40" fill="currentColor" className="opacity-20"/>
-                    <path d="M30 45 Q50 55 70 45" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
-                    <circle cx="35" cy="35" r="4" fill="currentColor"/>
-                    <circle cx="65" cy="35" r="4" fill="currentColor"/>
-                 </svg>
-              </div>
-              <div>
-                <h4 className="text-xl font-bold text-gray-800 mb-2">ぽぽ (Popo)</h4>
-                <p className="text-gray-600 mb-4 leading-relaxed">
-                  フリーランスのイラストレーター。
-                  「見ていて楽しくなる」をモットーに、2〜3頭身のデフォルメイラストを中心に制作しています。
-                  VTuber様のグッズイラストや、動画用素材などの制作実績があります。
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Clip Studio Paint</span>
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Photoshop</span>
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Illustrator</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Price */}
-          <div id="price" className="bg-white p-8 rounded-3xl shadow-sm border-2 border-pink-100">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <PenTool className="text-pink-500" /> Menu
-            </h3>
-            <div className="space-y-4">
-              {prices.map((price, idx) => (
-                <div key={idx} className="flex items-center p-4 rounded-2xl bg-gray-50 hover:bg-pink-50 transition-colors duration-300">
-                  <div className="p-3 bg-white rounded-xl shadow-sm text-pink-500 mr-4">
-                    {price.icon}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-gray-800">{price.title}</h4>
-                    <p className="text-xs text-gray-500">{price.desc}</p>
-                  </div>
-                  <div className="text-pink-600 font-bold">
-                    {price.price}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-gray-400 mt-4 text-right">※ 商用利用・差分制作は別途お見積りとなります。</p>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Contact セクション */}
-      <section id="contact" className="py-20 bg-white relative overflow-hidden">
-        <div className="absolute -right-20 top-10 w-64 h-64 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+    <!-- Tailwind Config & Custom Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"M PLUS Rounded 1c"', 'sans-serif'],
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'fade-in': 'fadeIn 0.2s ease-out forwards',
+                        'scale-up': 'scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeIn: {
+                            'from': { opacity: '0' },
+                            'to': { opacity: '1' },
+                        },
+                        scaleUp: {
+                            'from': { transform: 'scale(0.95)', opacity: '0' },
+                            'to': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fff7ed;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f9a8d4;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ec4899;
+        }
         
-        <div className="container mx-auto px-4 max-w-2xl relative z-10">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-gray-800 mb-4 flex justify-center items-center gap-2">
-              <Mail className="text-blue-400" /> Contact
-            </h3>
-            <p className="text-gray-600">
-              お仕事のご依頼、ご相談はお気軽にどうぞ。<br/>
-              通常3日以内に返信いたします。
-            </p>
-          </div>
+        /* ユーティリティクラス */
+        .animation-delay-2000 { animation-delay: 2s; }
+        .animation-delay-4000 { animation-delay: 4s; }
+        
+        /* モーダル表示時の背景スクロール禁止 */
+        body.modal-open { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-orange-50 text-gray-700 selection:bg-pink-200 overflow-x-hidden">
 
-          <form className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100" onSubmit={(e) => e.preventDefault()}>
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">お名前</label>
-              <input type="text" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all" placeholder="例: 山田 太郎" />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">メールアドレス</label>
-              <input type="email" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all" placeholder="example@email.com" />
-            </div>
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">お問い合わせ内容</label>
-              <textarea rows="4" className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none" placeholder="ご依頼の詳細やご質問など"></textarea>
-            </div>
-            <button className="w-full py-4 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700 hover:scale-[1.02] transition-all duration-300 shadow-lg">
-              送信する
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {/* フッター */}
-      <footer className="bg-gray-50 py-12 border-t border-gray-200">
-        <div className="container mx-auto px-4 flex flex-col items-center">
-          <div className="flex gap-6 mb-8">
-            <a href="#" className="p-3 bg-white rounded-full text-gray-600 hover:text-pink-500 hover:shadow-md transition-all"><Twitter size={24} /></a>
-            <a href="#" className="p-3 bg-white rounded-full text-gray-600 hover:text-pink-600 hover:shadow-md transition-all"><Instagram size={24} /></a>
-            <a href="#" className="p-3 bg-white rounded-full text-gray-600 hover:text-blue-500 hover:shadow-md transition-all"><ExternalLink size={24} /></a>
-          </div>
-          <p className="text-gray-400 text-sm font-medium">
-            &copy; 2024 Popo Illustration. All Rights Reserved.
-          </p>
-        </div>
-      </footer>
-
-      {/* 画像拡大モーダル */}
-      {selectedItem && (
-        <div 
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setSelectedItem(null)}
-        >
-          <div 
-            className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl transform transition-all animate-scale-up"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="relative aspect-video md:aspect-[4/3] bg-gray-50 flex items-center justify-center p-8">
-              <button 
-                onClick={() => setSelectedItem(null)}
-                className="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white rounded-full text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <PlaceholderArt type={selectedItem.type} color={selectedItem.color} />
-            </div>
-            <div className="p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-2">
-                <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide
-                  ${selectedItem.category === 'work' ? 'bg-blue-100 text-blue-600' : 
-                    selectedItem.category === 'fanart' ? 'bg-purple-100 text-purple-600' : 
-                    'bg-pink-100 text-pink-600'}`}>
-                  {selectedItem.category}
-                </span>
-                <h3 className="text-2xl font-bold text-gray-800">{selectedItem.title}</h3>
-              </div>
-              <p className="text-gray-600 leading-relaxed">
-                {selectedItem.description}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* カスタムCSS（Tailwindの設定で補いきれないアニメーション用） */}
-      <style>{`
-        @keyframes blob {
-          0% { transform: translate(0px, 0px) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-          100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        .animate-fade-in {
-          animation: fadeIn 0.2s ease-out forwards;
-        }
-        .animate-scale-up {
-          animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleUp {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+    <!-- 背景パターン -->
+    <div class="fixed inset-0 pointer-events-none opacity-10" 
+         style="background-image: radial-gradient(#fb7185 1px, transparent 1px); background-size: 24px 24px;">
     </div>
-  );
-}
+
+    <!-- ナビゲーション -->
+    <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300 py-6 bg-transparent">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-pink-500 flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <span class="bg-pink-500 text-white p-1 rounded-lg rotate-3 flex items-center justify-center">
+                    <i data-lucide="brush" class="w-5 h-5"></i>
+                </span>
+                POPO.ART
+            </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex gap-8 font-medium text-gray-600">
+                <a href="#gallery" class="hover:text-pink-500 transition-colors relative group">
+                    Gallery
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-pink-400 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="#about" class="hover:text-pink-500 transition-colors relative group">
+                    About
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-pink-400 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="#price" class="hover:text-pink-500 transition-colors relative group">
+                    Price
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-pink-400 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+                <a href="#contact" class="hover:text-pink-500 transition-colors relative group">
+                    Contact
+                    <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-pink-400 transition-all duration-300 group-hover:w-full"></span>
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button id="menu-btn" class="md:hidden p-2 text-gray-600 focus:outline-none">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobile-menu" class="hidden absolute top-full left-0 w-full bg-white shadow-lg py-4 flex flex-col items-center gap-4 md:hidden border-t border-gray-100">
+            <a href="#gallery" class="text-lg font-medium text-gray-600 hover:text-pink-500 w-full text-center py-2">Gallery</a>
+            <a href="#about" class="text-lg font-medium text-gray-600 hover:text-pink-500 w-full text-center py-2">About</a>
+            <a href="#price" class="text-lg font-medium text-gray-600 hover:text-pink-500 w-full text-center py-2">Price</a>
+            <a href="#contact" class="text-lg font-medium text-gray-600 hover:text-pink-500 w-full text-center py-2">Contact</a>
+        </div>
+    </nav>
+
+    <!-- ヒーローセクション -->
+    <header class="pt-32 pb-20 px-4 container mx-auto text-center relative overflow-hidden">
+        <div class="relative z-10 max-w-3xl mx-auto">
+            <div class="inline-block px-4 py-1 bg-yellow-200 text-yellow-800 rounded-full text-sm font-bold mb-4 rotate-[-2deg] shadow-sm">
+                Welcome to my portfolio!
+            </div>
+            <h2 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight tracking-tight">
+                ゆるっと、かわいく、<br/>
+                <span class="text-pink-500 inline-block transform hover:scale-110 transition-transform duration-300 cursor-default">元気</span>
+                をお届けします。
+            </h2>
+            <p class="text-lg text-gray-600 mb-10 leading-relaxed">
+                デフォルメイラストレーター「ぽぽ」のポートフォリオサイトです。<br class="hidden md:inline"/>
+                キャラクターの魅力をぎゅっと縮めて描きます。
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="#gallery" class="px-8 py-3 bg-pink-500 text-white rounded-full font-bold shadow-lg hover:bg-pink-600 hover:shadow-pink-300/50 hover:-translate-y-1 transition-all duration-300">
+                    作品を見る
+                </a>
+                <a href="#contact" class="px-8 py-3 bg-white text-pink-500 border-2 border-pink-200 rounded-full font-bold hover:bg-pink-50 hover:border-pink-300 transition-all duration-300">
+                    ご依頼・相談
+                </a>
+            </div>
+        </div>
+
+        <!-- 装飾オブジェクト (CSS Animation) -->
+        <div class="absolute top-20 left-10 w-20 h-20 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute top-40 right-10 w-20 h-20 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute bottom-10 left-1/4 w-20 h-20 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    </header>
+
+    <!-- ギャラリーセクション -->
+    <section id="gallery" class="py-20 bg-white rounded-t-[3rem] shadow-[0_-10px_40px_rgba(0,0,0,0.02)]">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800 mb-4 flex justify-center items-center gap-2">
+                    <i data-lucide="palette" class="text-pink-400"></i> Gallery
+                </h3>
+                <!-- フィルターボタン -->
+                <div class="flex flex-wrap justify-center gap-2" id="filter-buttons">
+                    <button data-filter="all" class="filter-btn active px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-pink-500 text-white shadow-md scale-105">ALL</button>
+                    <button data-filter="original" class="filter-btn px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-gray-100 text-gray-500 hover:bg-gray-200">Original</button>
+                    <button data-filter="fanart" class="filter-btn px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-gray-100 text-gray-500 hover:bg-gray-200">Fan Art</button>
+                    <button data-filter="work" class="filter-btn px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-gray-100 text-gray-500 hover:bg-gray-200">Work</button>
+                </div>
+            </div>
+
+            <!-- ギャラリーグリッド (JSで中身を生成します) -->
+            <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Items will be injected here by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- About & Price セクション -->
+    <section class="py-20 bg-yellow-50">
+        <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12">
+            
+            <!-- About -->
+            <div id="about" class="bg-white p-8 rounded-3xl shadow-sm border-2 border-yellow-100 scroll-mt-24">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="coffee" class="text-yellow-500"></i> About Me
+                </h3>
+                <div class="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                    <div class="w-32 h-32 bg-pink-100 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden border-4 border-white shadow-md text-pink-500">
+                         <!-- アイコンSVG -->
+                         <svg viewBox="0 0 100 100" class="w-24 h-24">
+                            <circle cx="50" cy="50" r="40" fill="currentColor" class="opacity-20"/>
+                            <path d="M30 45 Q50 55 70 45" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <circle cx="35" cy="35" r="4" fill="currentColor"/>
+                            <circle cx="65" cy="35" r="4" fill="currentColor"/>
+                         </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">ぽぽ (Popo)</h4>
+                        <p class="text-gray-600 mb-4 leading-relaxed">
+                            フリーランスのイラストレーター。<br>
+                            「見ていて楽しくなる」をモットーに、2〜3頭身のデフォルメイラストを中心に制作しています。
+                        </p>
+                        <div class="flex gap-2 flex-wrap">
+                            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Clip Studio Paint</span>
+                            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Photoshop</span>
+                            <span class="px-3 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">Illustrator</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div id="price" class="bg-white p-8 rounded-3xl shadow-sm border-2 border-pink-100 scroll-mt-24">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="pen-tool" class="text-pink-500"></i> Menu
+                </h3>
+                <div class="space-y-4">
+                    <!-- Menu Item 1 -->
+                    <div class="flex items-center p-4 rounded-2xl bg-gray-50 hover:bg-pink-50 transition-colors duration-300">
+                        <div class="p-3 bg-white rounded-xl shadow-sm text-pink-500 mr-4">
+                            <i data-lucide="heart" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">SDアイコン</h4>
+                            <p class="text-xs text-gray-500">SNSアイコンなどに最適。バストアップ中心。</p>
+                        </div>
+                        <div class="text-pink-600 font-bold">¥5,000~</div>
+                    </div>
+                    <!-- Menu Item 2 -->
+                    <div class="flex items-center p-4 rounded-2xl bg-gray-50 hover:bg-pink-50 transition-colors duration-300">
+                        <div class="p-3 bg-white rounded-xl shadow-sm text-pink-500 mr-4">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">SD全身</h4>
+                            <p class="text-xs text-gray-500">グッズ制作や動画素材に。透過PNG納品。</p>
+                        </div>
+                        <div class="text-pink-600 font-bold">¥8,000~</div>
+                    </div>
+                    <!-- Menu Item 3 -->
+                    <div class="flex items-center p-4 rounded-2xl bg-gray-50 hover:bg-pink-50 transition-colors duration-300">
+                        <div class="p-3 bg-white rounded-xl shadow-sm text-pink-500 mr-4">
+                            <i data-lucide="palette" class="w-5 h-5"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">一枚絵</h4>
+                            <p class="text-xs text-gray-500">背景や小物を含む、物語性のあるイラスト。</p>
+                        </div>
+                        <div class="text-pink-600 font-bold">¥15,000~</div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-right">※ 商用利用・差分制作は別途お見積りとなります。</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Contact セクション -->
+    <section id="contact" class="py-20 bg-white relative overflow-hidden">
+        <div class="absolute -right-20 top-10 w-64 h-64 bg-blue-50 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+        
+        <div class="container mx-auto px-4 max-w-2xl relative z-10">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800 mb-4 flex justify-center items-center gap-2">
+                    <i data-lucide="mail" class="text-blue-400"></i> Contact
+                </h3>
+                <p class="text-gray-600">
+                    お仕事のご依頼、ご相談はお気軽にどうぞ。<br/>
+                    通常3日以内に返信いたします。
+                </p>
+            </div>
+
+            <form class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100" onsubmit="event.preventDefault(); alert('デモのため送信されません');">
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">お名前</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all" placeholder="例: 山田 太郎">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">メールアドレス</label>
+                    <input type="email" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all" placeholder="example@email.com">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">お問い合わせ内容</label>
+                    <textarea rows="4" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 outline-none transition-all resize-none" placeholder="ご依頼の詳細やご質問など"></textarea>
+                </div>
+                <button class="w-full py-4 bg-gray-800 text-white rounded-xl font-bold hover:bg-gray-700 hover:scale-[1.02] transition-all duration-300 shadow-lg">
+                    送信する
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="bg-gray-50 py-12 border-t border-gray-200">
+        <div class="container mx-auto px-4 flex flex-col items-center">
+            <div class="flex gap-6 mb-8">
+                <a href="#" class="p-3 bg-white rounded-full text-gray-600 hover:text-pink-500 hover:shadow-md transition-all"><i data-lucide="twitter" class="w-6 h-6"></i></a>
+                <a href="#" class="p-3 bg-white rounded-full text-gray-600 hover:text-pink-600 hover:shadow-md transition-all"><i data-lucide="instagram" class="w-6 h-6"></i></a>
+                <a href="#" class="p-3 bg-white rounded-full text-gray-600 hover:text-blue-500 hover:shadow-md transition-all"><i data-lucide="external-link" class="w-6 h-6"></i></a>
+            </div>
+            <p class="text-gray-400 text-sm font-medium">
+                &copy; 2024 Popo Illustration. All Rights Reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- モーダル (初期状態はhidden) -->
+    <div id="modal" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300" id="modal-content">
+            <div class="relative aspect-video md:aspect-[4/3] bg-gray-50 flex items-center justify-center p-8" id="modal-image-container">
+                <!-- Close Button -->
+                <button onclick="closeModal()" class="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white rounded-full text-gray-700 transition-colors z-10">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                <!-- Image/SVG injected here -->
+                <div id="modal-svg-placeholder" class="w-full h-full flex items-center justify-center"></div>
+            </div>
+            <div class="p-6 md:p-8">
+                <div class="flex items-center gap-3 mb-2">
+                    <span id="modal-category-badge" class="px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide bg-pink-100 text-pink-600">
+                        Category
+                    </span>
+                    <h3 id="modal-title" class="text-2xl font-bold text-gray-800">Title</h3>
+                </div>
+                <p id="modal-desc" class="text-gray-600 leading-relaxed">Description</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- データ ---
+        const portfolioItems = [
+            { id: 1, title: "看板娘ちゃん", category: "original", type: "character", color: "pink", description: "オリジナルキャラクターの基本立ち絵です。" },
+            { id: 2, title: "配信待機画面", category: "work", type: "animal", color: "blue", description: "Vtuber様のご依頼で制作した待機画面イラストです。" },
+            { id: 3, title: "カフェメニュー", category: "work", type: "food", color: "yellow", description: "コラボカフェのSDイラストを担当しました。" },
+            { id: 4, title: "夏祭り", category: "original", type: "character", color: "purple", description: "季節のイラスト（8月）。" },
+            { id: 5, title: "ゲームアバター", category: "fanart", type: "character", color: "green", description: "某RPGの自キャラデフォルメ。" },
+            { id: 6, title: "スタンプ用", category: "work", type: "animal", color: "pink", description: "LINEスタンプ用の40種セットの一部。" },
+        ];
+
+        // --- SVG生成関数 (プレースホルダー用) ---
+        function getPlaceholderSvg(type, colorClass) {
+            const colors = {
+                pink: "bg-pink-100 text-pink-500",
+                blue: "bg-blue-100 text-blue-500",
+                yellow: "bg-yellow-100 text-yellow-500",
+                purple: "bg-purple-100 text-purple-500",
+                green: "bg-green-100 text-green-500",
+            };
+            const bgClass = colors[colorClass] || colors.pink;
+            
+            let svgContent = '';
+            if (type === 'character') {
+                svgContent = `
+                    <svg viewBox="0 0 100 100" class="w-2/3 h-2/3 animate-pulse-slow">
+                        <circle cx="50" cy="50" r="40" fill="currentColor" class="opacity-20"/>
+                        <circle cx="35" cy="45" r="5" fill="currentColor"/>
+                        <circle cx="65" cy="45" r="5" fill="currentColor"/>
+                        <path d="M 40 65 Q 50 75 60 65" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+                        <circle cx="30" cy="55" r="4" fill="#ff9999" opacity="0.5"/>
+                        <circle cx="70" cy="55" r="4" fill="#ff9999" opacity="0.5"/>
+                    </svg>`;
+            } else if (type === 'animal') {
+                svgContent = `
+                    <svg viewBox="0 0 100 100" class="w-2/3 h-2/3">
+                        <path d="M 20 30 Q 50 10 80 30 L 80 80 Q 50 90 20 80 Z" fill="currentColor" class="opacity-20"/>
+                        <path d="M 20 30 L 15 10 L 35 25 Z" fill="currentColor" class="opacity-30"/>
+                        <path d="M 80 30 L 85 10 L 65 25 Z" fill="currentColor" class="opacity-30"/>
+                        <circle cx="40" cy="50" r="4" fill="currentColor"/>
+                        <circle cx="60" cy="50" r="4" fill="currentColor"/>
+                        <ellipse cx="50" cy="60" rx="6" ry="4" fill="currentColor"/>
+                    </svg>`;
+            } else { // food or default
+                svgContent = `
+                    <svg viewBox="0 0 100 100" class="w-2/3 h-2/3">
+                        <path d="M 50 20 L 80 80 L 20 80 Z" fill="currentColor" class="opacity-20" rx="10"/>
+                        <circle cx="40" cy="40" r="6" fill="white" opacity="0.8"/>
+                        <circle cx="60" cy="55" r="5" fill="white" opacity="0.8"/>
+                        <circle cx="50" cy="70" r="7" fill="white" opacity="0.8"/>
+                    </svg>`;
+            }
+
+            return `<div class="w-full h-full flex items-center justify-center rounded-3xl overflow-hidden ${bgClass}">${svgContent}</div>`;
+        }
+
+        // --- 初期化処理 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderGallery('all');
+            setupScrollListener();
+            setupMobileMenu();
+            setupFilters();
+        });
+
+        // --- ギャラリーレンダリング ---
+        const galleryGrid = document.getElementById('gallery-grid');
+        
+        function renderGallery(filter) {
+            galleryGrid.innerHTML = ''; // Clear existing
+            
+            const filteredItems = filter === 'all' 
+                ? portfolioItems 
+                : portfolioItems.filter(item => item.category === filter);
+
+            filteredItems.forEach(item => {
+                const el = document.createElement('div');
+                el.className = "group relative aspect-square cursor-pointer rounded-3xl overflow-hidden bg-gray-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border-4 border-white animate-fade-in";
+                el.onclick = () => openModal(item);
+                
+                el.innerHTML = `
+                    ${getPlaceholderSvg(item.type, item.color)}
+                    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300"></div>
+                    <div class="absolute bottom-0 left-0 w-full p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                        <div class="bg-white/90 backdrop-blur px-4 py-2 rounded-2xl shadow-sm text-center">
+                            <p class="text-sm font-bold text-gray-800">${item.title}</p>
+                        </div>
+                    </div>
+                `;
+                galleryGrid.appendChild(el);
+            });
+        }
+
+        // --- フィルター機能 ---
+        function setupFilters() {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Remove active styles from all
+                    buttons.forEach(b => {
+                        b.className = "filter-btn px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-gray-100 text-gray-500 hover:bg-gray-200";
+                    });
+                    // Add active style to clicked
+                    e.target.className = "filter-btn active px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 bg-pink-500 text-white shadow-md scale-105";
+                    
+                    renderGallery(e.target.dataset.filter);
+                });
+            });
+        }
+
+        // --- スクロール検知 (ナビゲーションバー) ---
+        function setupScrollListener() {
+            const nav = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    nav.classList.add('bg-white/90', 'backdrop-blur-md', 'shadow-sm', 'py-2');
+                    nav.classList.remove('bg-transparent', 'py-6');
+                } else {
+                    nav.classList.remove('bg-white/90', 'backdrop-blur-md', 'shadow-sm', 'py-2');
+                    nav.classList.add('bg-transparent', 'py-6');
+                }
+            });
+        }
+
+        // --- モバイルメニュー ---
+        function setupMobileMenu() {
+            const btn = document.getElementById('menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            const menuLinks = menu.querySelectorAll('a');
+
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+                // アイコン切り替えロジックは省略（簡易実装）
+            });
+
+            // リンククリックでメニューを閉じる
+            menuLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                });
+            });
+        }
+
+        // --- モーダル機能 ---
+        const modal = document.getElementById('modal');
+        const modalContent = document.getElementById('modal-content');
+        
+        function openModal(item) {
+            // データ流し込み
+            document.getElementById('modal-title').innerText = item.title;
+            document.getElementById('modal-desc').innerText = item.description;
+            document.getElementById('modal-svg-placeholder').innerHTML = getPlaceholderSvg(item.type, item.color);
+            
+            // バッジの色設定
+            const badge = document.getElementById('modal-category-badge');
+            badge.innerText = item.category;
+            badge.className = `px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wide ${
+                item.category === 'work' ? 'bg-blue-100 text-blue-600' : 
+                item.category === 'fanart' ? 'bg-purple-100 text-purple-600' : 
+                'bg-pink-100 text-pink-600'
+            }`;
+
+            // 表示アニメーション
+            modal.classList.remove('hidden');
+            document.body.classList.add('modal-open'); // 背景スクロール固定
+            
+            // 少し待ってから透明度を変更しないとtransitionが効かない
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('modal-open');
+            }, 300); // transition durationと合わせる
+        }
+
+        // モーダル背景クリックで閉じる
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+    </script>
+</body>
+</html>
